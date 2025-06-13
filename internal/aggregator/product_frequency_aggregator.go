@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -43,9 +44,21 @@ func (p *ProductFrequencyAggregator) GetResults(w http.ResponseWriter, r *http.R
 		return result[i].TransactionCount > result[j].TransactionCount
 	})
 
-	if len(result) > 20 {
-		result = result[0:20]
+	limit := 20
+	query := r.URL.Query()
+	if l := query.Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+			limit = parsed
+		}
 	}
+
+	startVal := 0
+	endVal := startVal + limit
+	if endVal > len(result) {
+		endVal = len(result)
+	}
+
+	result = result[startVal:endVal]
 
 	err := json.NewEncoder(w).Encode(result)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -53,10 +54,22 @@ func (r *RegionRevenueAggregator) GetResults(w http.ResponseWriter, rq *http.Req
 		return result[i].Revenue.GreaterThanOrEqual(result[j].Revenue)
 	})
 
-	if len(result) > 30 {
-		result = result[0:30]
+	limit := 30
+	query := rq.URL.Query()
+	if l := query.Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+			limit = parsed
+		}
 	}
 
+	startVal := 0
+	endVal := startVal + limit
+	if endVal > len(result) {
+		endVal = len(result)
+	}
+
+	result = result[startVal:endVal]
+	
 	err := json.NewEncoder(w).Encode(result)
 	if err != nil {
 		log.Println(err)

@@ -4,6 +4,8 @@ import (
 	"Qoria/internal/model"
 	"encoding/csv"
 	"github.com/shopspring/decimal"
+	"io"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -18,14 +20,20 @@ func LoadCsvData(filePath string) ([]*model.Transaction, error) {
 	defer file.Close()
 
 	reader := csv.NewReader(file)
-	records, err := reader.ReadAll()
+	_, err = reader.Read()
 	if err != nil {
-		return []*model.Transaction{}, err
+		log.Fatal(err)
 	}
 
 	transactions := make([]*model.Transaction, 0)
-	for i, record := range records {
-		if i == 0 {
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			log.Println("Error occurred while reading csv, error : ", err)
 			continue
 		}
 

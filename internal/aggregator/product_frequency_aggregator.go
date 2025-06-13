@@ -1,0 +1,57 @@
+package aggregator
+
+import (
+	"Qoria/internal/model"
+	"encoding/json"
+	"log"
+	"net/http"
+	"sort"
+	"time"
+)
+
+type ProductFrequencyAggregator struct {
+	data map[string]*model.ProductFrequency
+}
+
+func (p *ProductFrequencyAggregator) Initialize() {
+	p.data = make(map[string]*model.ProductFrequency)
+}
+
+func (p *ProductFrequencyAggregator) ProcessTransaction(tx *model.Transaction) error {
+	if _, ok := p.data[tx.ProductId]; !ok {
+		p.data[tx.ProductId] = &model.ProductFrequency{
+			ProductId:              tx.ProductId,
+			ProductName:            tx.ProductName,
+			AvailableStockQuantity: tx.StockQuantity,
+		}
+	}
+
+	p.data[tx.ProductId].TransactionCount++
+	return nil
+}
+
+func (p *ProductFrequencyAggregator) GetResults(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
+	w.Header().Set("Content-Type", "application/json")
+	result := make([]*model.ProductFrequency, 0)
+	for _, summary := range p.data {
+		result = append(result, summary)
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].TransactionCount > result[j].TransactionCount
+	})
+
+	if len(result) > 20 {
+		result = result[0:20]
+	}
+
+	err := json.NewEncoder(w).Encode(result)
+	if err != nil {
+		log.Println(err)
+	}
+
+	elapsed := time.Since(start)
+	log.Printf("Product frequency request took %s\n", elapsed)
+}

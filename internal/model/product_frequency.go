@@ -5,4 +5,5 @@ type ProductFrequency struct {
 	ProductName            string `json:"product_name"`
 	TransactionCount       int64  `json:"transaction_count"`
 	AvailableStockQuantity int64  `json:"available_stock_quantity"`
+	UnitsSold              int64  `json:"units_sold"`
 }

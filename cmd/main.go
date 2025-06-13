@@ -35,6 +35,9 @@ func main() {
 	newApi.RegisterApiFunctions()
 
 	// start the service
+	fs := http.FileServer(http.Dir("./static"))
+	http.Handle("/", fs)
+
 	fmt.Println("Server starting at :8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

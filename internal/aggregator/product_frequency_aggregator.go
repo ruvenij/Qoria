@@ -28,6 +28,7 @@ func (p *ProductFrequencyAggregator) ProcessTransaction(tx *model.Transaction) e
 	}
 
 	p.data[tx.ProductId].TransactionCount++
+	p.data[tx.ProductId].UnitsSold += tx.Quantity
 	return nil
 }
 
@@ -41,7 +42,7 @@ func (p *ProductFrequencyAggregator) GetResults(w http.ResponseWriter, r *http.R
 	}
 
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].TransactionCount > result[j].TransactionCount
+		return result[i].UnitsSold > result[j].UnitsSold
 	})
 
 	limit := 20

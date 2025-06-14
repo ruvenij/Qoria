@@ -17,6 +17,7 @@ func (m *MonthlySalesAggregator) Initialize() {
 	m.data = make(map[string]*model.MonthlySales)
 }
 
+// ProcessTransaction Stores the incoming value after aggregating within the data structure
 func (m *MonthlySalesAggregator) ProcessTransaction(tx *model.Transaction) error {
 	month := tx.TransactionDate.Month().String()
 	if _, ok := m.data[month]; !ok {
@@ -28,6 +29,7 @@ func (m *MonthlySalesAggregator) ProcessTransaction(tx *model.Transaction) error
 	return nil
 }
 
+// GetResults Gets the results from the data structure and returns as json
 func (m *MonthlySalesAggregator) GetResults(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 

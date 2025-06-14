@@ -18,13 +18,18 @@ func (p *ProductFrequencyAggregator) Initialize() {
 	p.data = make(map[string]*model.ProductFrequency)
 }
 
+// ProcessTransaction Stores the incoming value after aggregating within the data structure
 func (p *ProductFrequencyAggregator) ProcessTransaction(tx *model.Transaction) error {
 	if _, ok := p.data[tx.ProductId]; !ok {
 		p.data[tx.ProductId] = &model.ProductFrequency{
-			ProductId:              tx.ProductId,
-			ProductName:            tx.ProductName,
-			AvailableStockQuantity: tx.StockQuantity,
+			ProductId:   tx.ProductId,
+			ProductName: tx.ProductName,
 		}
+	}
+
+	if tx.AddedDate.After(p.data[tx.ProductId].StockAddedDate) {
+		p.data[tx.ProductId].StockAddedDate = tx.AddedDate
+		p.data[tx.ProductId].AvailableStockQuantity = tx.StockQuantity
 	}
 
 	p.data[tx.ProductId].TransactionCount++
@@ -32,6 +37,7 @@ func (p *ProductFrequencyAggregator) ProcessTransaction(tx *model.Transaction) e
 	return nil
 }
 
+// GetResults Gets the results from the data structure and returns as json
 func (p *ProductFrequencyAggregator) GetResults(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 

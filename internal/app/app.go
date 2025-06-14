@@ -6,37 +6,75 @@ import (
 	"Qoria/internal/util"
 	"log"
 	"net/http"
+	"sync"
 )
 
 type App struct {
-	aggregators map[int]aggregator.Aggregator
+	aggregators     map[int]aggregator.Aggregator
+	aggregatorsLock map[int]*sync.Mutex
 }
 
 func NewApp() *App {
 	aggregators := make(map[int]aggregator.Aggregator)
+	aggregatorsLock := make(map[int]*sync.Mutex)
 	aggregators[util.CountryRevenueAggregator] = &aggregator.CountryRevenueAggregator{}
 	aggregators[util.MonthlySalesAggregator] = &aggregator.MonthlySalesAggregator{}
 	aggregators[util.ProductFrequencyAggregator] = &aggregator.ProductFrequencyAggregator{}
 	aggregators[util.RegionRevenueAggregator] = &aggregator.RegionRevenueAggregator{}
 
-	for _, agg := range aggregators {
+	for key, agg := range aggregators {
 		agg.Initialize()
+		aggregatorsLock[key] = &sync.Mutex{}
 	}
 
 	return &App{
-		aggregators: aggregators,
+		aggregators:     aggregators,
+		aggregatorsLock: aggregatorsLock,
 	}
 }
 
 func (app *App) ProcessData(transactions []*model.Transaction) error {
-	for _, txn := range transactions {
-		for key, agg := range app.aggregators {
-			err := agg.ProcessTransaction(txn)
-			if err != nil {
-				log.Printf("Error occurred while trying to aggregate the values for aggregator %d, txn : %s, error : %s\n",
-					key, txn.TransactionId, err)
-				return err
+	txnChannel := make(chan *model.Transaction, 10000)
+	errChannel := make(chan error)
+	workerCount := 8
+	var wg sync.WaitGroup
+
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			for txn := range txnChannel {
+				for key, agg := range app.aggregators {
+					app.aggregatorsLock[key].Lock()
+
+					err := agg.ProcessTransaction(txn)
+					if err != nil {
+						log.Printf("Error occurred while trying to aggregate the values for aggregator "+
+							"%d, txn : %s, error : %s\n", key, txn.TransactionId, err)
+						errChannel <- err
+					}
+
+					app.aggregatorsLock[key].Unlock()
+				}
 			}
+		}()
+	}
+
+	go func() {
+		for _, txn := range transactions {
+			txnChannel <- txn
+		}
+		close(txnChannel)
+	}()
+
+	wg.Wait()
+	close(errChannel)
+
+	for err := range errChannel {
+		if err != nil {
+			return err
 		}
 	}
 

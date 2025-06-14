@@ -13,11 +13,14 @@ import (
 func main() {
 	start := time.Now()
 	// load the data
-	transactions, err := data.LoadCsvData("data/GO_test_5m.csv")
+	transactions, err := data.LoadCsvData()
 	if err != nil {
 		log.Fatal("Failed to load csv data ", err)
 		return
 	}
+
+	load := time.Now()
+	fmt.Printf("Loaded transactions in %.2f seconds\n", time.Since(start).Seconds())
 
 	// process the data
 	newApp := app.NewApp()
@@ -27,8 +30,7 @@ func main() {
 		return
 	}
 
-	seconds := time.Since(start).Seconds()
-	fmt.Printf("Load time : %.2f seconds\n", seconds)
+	fmt.Printf("Process time : %.2f seconds\n", time.Since(load).Seconds())
 
 	// register api functions
 	newApi := api.NewApi(newApp)

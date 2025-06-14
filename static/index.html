@@ -14,7 +14,6 @@
 <div class="container py-4">
     <h1 class="text-center mb-4">Business Insights Dashboard</h1>
 
-    <!-- 1. Country-Level Revenue Table -->
     <div class="card mb-4">
         <div class="card-header">Country-Level Revenue</div>
         <div class="card-body">
@@ -32,7 +31,12 @@
         </div>
     </div>
 
-    <!-- 2. Top 20 Frequently Purchased Products -->
+    <div class="d-flex justify-content-between mt-2 mb-4">
+        <button id="prevPage" class="btn btn-outline-primary btn-sm">← Previous</button>
+        <button id="nextPage" class="btn btn-outline-primary btn-sm">Next →</button>
+    </div>
+
+
     <div class="card mb-4">
         <div class="card-header">Top 20 Frequently Purchased Products</div>
         <div class="card-body">
@@ -40,7 +44,6 @@
         </div>
     </div>
 
-    <!-- 3. Monthly Sales Volume -->
     <div class="card mb-4">
         <div class="card-header">Monthly Sales Volume</div>
         <div class="card-body">
@@ -48,7 +51,6 @@
         </div>
     </div>
 
-    <!-- 4. Top 30 Regions by Revenue -->
     <div class="card mb-4">
         <div class="card-header">Top 30 Regions by Revenue</div>
         <div class="card-body">
@@ -58,24 +60,42 @@
 </div>
 
 <script>
-    // Fetch country-level revenue
-    fetch('/api/revenue-by-country')
-        .then(res => res.json())
-        .then(data => {
-            const tbody = document.querySelector('#countryTable tbody');
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-            <td>${row.country}</td>
-            <td>${row.product_name}</td>
-            <td>$${parseFloat(row.revenue).toFixed(2)}</td>
-            <td>${row.transaction_count}</td>
-          `;
-                tbody.appendChild(tr);
-            });
-        });
+    let currentPage = 1;
+    const limit = 10;
 
-    // Top 20 Products Chart
+    function loadPage(page) {
+        fetch(`/api/revenue-by-country?page=${page}&limit=${limit}`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.querySelector('#countryTable tbody');
+                tbody.innerHTML = '';
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.country}</td>
+                        <td>${row.product_name}</td>
+                        <td>$${parseFloat(row.revenue).toFixed(2)}</td>
+                        <td>${row.transaction_count}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+    }
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            loadPage(currentPage);
+        }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', () => {
+        currentPage++;
+        loadPage(currentPage);
+    });
+
+    loadPage(currentPage);
+
     fetch('/api/frequent-products?limit=20')
         .then(res => res.json())
         .then(data => {
@@ -102,7 +122,6 @@
             });
         });
 
-    // Monthly Sales Volume Chart
     fetch('/api/monthly-sales')
         .then(res => res.json())
         .then(data => {
@@ -128,8 +147,7 @@
             });
         });
 
-    // Top 30 Regions Chart
-    fetch('/api/revenue-by-region')
+    fetch('/api/revenue-by-region?limit=30')
         .then(res => res.json())
         .then(data => {
             new Chart(document.getElementById('topRegionsChart'), {

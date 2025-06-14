@@ -18,6 +18,7 @@ func (c *CountryRevenueAggregator) Initialize() {
 	c.data = make(map[string]map[string]*model.CountryRevenueSummary)
 }
 
+// ProcessTransaction Stores the incoming value after aggregating within the data structure
 func (c *CountryRevenueAggregator) ProcessTransaction(tx *model.Transaction) error {
 	if _, ok := c.data[tx.Country]; !ok {
 		c.data[tx.Country] = make(map[string]*model.CountryRevenueSummary)
@@ -39,6 +40,7 @@ func (c *CountryRevenueAggregator) ProcessTransaction(tx *model.Transaction) err
 	return nil
 }
 
+// GetResults Gets the results from the data structure and returns as json
 func (c *CountryRevenueAggregator) GetResults(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 

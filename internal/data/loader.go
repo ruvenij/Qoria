@@ -2,16 +2,52 @@ package data
 
 import (
 	"Qoria/internal/model"
+	"bufio"
 	"encoding/csv"
 	"github.com/shopspring/decimal"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 )
 
-func LoadCsvData(filePath string) ([]*model.Transaction, error) {
+func LoadCsvData() ([]*model.Transaction, error) {
+	allTransactions := make([]*model.Transaction, 0)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	splitFiles, err := filepath.Glob("././data/split/chunk_*.csv")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i := 0; i < len(splitFiles); i++ {
+		filePath := splitFiles[i]
+		wg.Add(1)
+		go func(file string) {
+			defer wg.Done()
+
+			transactions, err := loadCsvFile(file)
+			if err != nil {
+				log.Println("Error occurred while loading transactions from file, file path : ",
+					filePath, ", error : ", err)
+				return
+			}
+
+			mu.Lock()
+			allTransactions = append(allTransactions, transactions...)
+			mu.Unlock()
+		}(filePath)
+	}
+
+	wg.Wait()
+	return allTransactions, nil
+}
+
+func loadCsvFile(filePath string) ([]*model.Transaction, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return []*model.Transaction{}, err
@@ -19,7 +55,7 @@ func LoadCsvData(filePath string) ([]*model.Transaction, error) {
 
 	defer file.Close()
 
-	reader := csv.NewReader(file)
+	reader := csv.NewReader(bufio.NewReader(file))
 	_, err = reader.Read()
 	if err != nil {
 		log.Fatal(err)

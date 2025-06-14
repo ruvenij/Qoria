@@ -18,6 +18,7 @@ func (r *RegionRevenueAggregator) Initialize() {
 	r.data = make(map[string]map[string]*model.RegionRevenueSummary)
 }
 
+// ProcessTransaction Stores the incoming value after aggregating within the data structure
 func (r *RegionRevenueAggregator) ProcessTransaction(tx *model.Transaction) error {
 	if _, ok := r.data[tx.Region]; !ok {
 		r.data[tx.Region] = make(map[string]*model.RegionRevenueSummary)
@@ -39,6 +40,7 @@ func (r *RegionRevenueAggregator) ProcessTransaction(tx *model.Transaction) erro
 	return nil
 }
 
+// GetResults Gets the results from the data structure and returns as json
 func (r *RegionRevenueAggregator) GetResults(w http.ResponseWriter, rq *http.Request) {
 	start := time.Now()
 
@@ -69,7 +71,7 @@ func (r *RegionRevenueAggregator) GetResults(w http.ResponseWriter, rq *http.Req
 	}
 
 	result = result[startVal:endVal]
-	
+
 	err := json.NewEncoder(w).Encode(result)
 	if err != nil {
 		log.Println(err)

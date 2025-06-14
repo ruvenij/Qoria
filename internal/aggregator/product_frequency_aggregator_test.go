@@ -25,6 +25,7 @@ func Test_ProductFrequencyProcessTransaction_OneTxn(t *testing.T) {
 		Quantity:        2,
 		TotalPrice:      decimal.NewFromFloat(120.50),
 		StockQuantity:   150,
+		AddedDate:       time.Now(),
 	})
 
 	assert.NoError(t, err)
@@ -53,6 +54,7 @@ func Test_ProductFrequencyProcessTransaction_MultipleTxnSameProduct(t *testing.T
 		Quantity:        2,
 		TotalPrice:      decimal.NewFromFloat(120.50),
 		StockQuantity:   150,
+		AddedDate:       time.Now(),
 	})
 
 	assert.NoError(t, err)
@@ -67,6 +69,7 @@ func Test_ProductFrequencyProcessTransaction_MultipleTxnSameProduct(t *testing.T
 		Quantity:        5,
 		TotalPrice:      decimal.NewFromFloat(120.50),
 		StockQuantity:   150,
+		AddedDate:       time.Now(),
 	})
 
 	assert.NoError(t, err)
@@ -95,6 +98,7 @@ func Test_ProductFrequencyProcessTransaction_MultipleTxnDifferentProducts(t *tes
 		Quantity:        2,
 		TotalPrice:      decimal.NewFromFloat(120.50),
 		StockQuantity:   150,
+		AddedDate:       time.Now(),
 	})
 
 	assert.NoError(t, err)
@@ -109,6 +113,7 @@ func Test_ProductFrequencyProcessTransaction_MultipleTxnDifferentProducts(t *tes
 		Quantity:        5,
 		TotalPrice:      decimal.NewFromFloat(120.50),
 		StockQuantity:   150,
+		AddedDate:       time.Now(),
 	})
 
 	assert.NoError(t, err)
